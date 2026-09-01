@@ -1,0 +1,20 @@
+{
+  "Layout Teste": [
+    {
+      "source": "Nome",
+      "destination": "Cliente"
+    },
+    {
+      "source": "Email",
+      "destination": "Contato"
+    },
+    {
+      "source": "Valor",
+      "destination": "Total"
+    },
+    {
+      "source": "Data",
+      "destination": "Ref"
+    }
+  ]
+}
