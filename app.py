@@ -184,31 +184,9 @@ class App(tk.Tk):
 
     # ─── Painel direito ────────────────────────────────────────────────────────
     def _build_right_panel(self, parent: tk.Frame):
-        # Seção de arquivos
-        files_frame = tk.Frame(parent, bg=BG_PANEL)
-        files_frame.pack(fill="x", padx=16, pady=(16, 0))
-
-        self._build_file_section(files_frame)
-
-        ttk.Separator(parent, orient="horizontal").pack(
-            fill="x", padx=16, pady=12)
-
-        # Instrução de mapeamento
-        self.instruction_label = tk.Label(
-            parent,
-            text="① Selecione as planilhas acima para começar o mapeamento",
-            bg=BG_DARK, fg=TEXT_SEC, font=("Segoe UI", 9, "italic"))
-        self.instruction_label.pack(anchor="w", padx=16)
-
-        # Área de mapeamento
-        mapping_area = tk.Frame(parent, bg=BG_DARK)
-        mapping_area.pack(fill="both", expand=True, padx=16, pady=8)
-
-        self._build_mapping_area(mapping_area)
-
-        # Botão de execução
+        # Botão de execução fixado no rodapé
         exec_frame = tk.Frame(parent, bg=BG_DARK)
-        exec_frame.pack(fill="x", padx=16, pady=12)
+        exec_frame.pack(side="bottom", fill="x", padx=16, pady=12)
 
         ttk.Button(exec_frame, text="▶  Preencher Planilha",
                    style="Success.TButton",
@@ -216,6 +194,28 @@ class App(tk.Tk):
         ttk.Button(exec_frame, text="↺  Limpar Mapeamento",
                    style="Ghost.TButton",
                    command=self._clear_mapping).pack(side="right", padx=(0, 8))
+
+        # Seção de arquivos
+        files_frame = tk.Frame(parent, bg=BG_PANEL)
+        files_frame.pack(side="top", fill="x", padx=16, pady=(16, 0))
+
+        self._build_file_section(files_frame)
+
+        ttk.Separator(parent, orient="horizontal").pack(
+            side="top", fill="x", padx=16, pady=12)
+
+        # Instrução de mapeamento
+        self.instruction_label = tk.Label(
+            parent,
+            text="① Selecione as planilhas acima para começar o mapeamento",
+            bg=BG_DARK, fg=TEXT_SEC, font=("Segoe UI", 9, "italic"))
+        self.instruction_label.pack(side="top", anchor="w", padx=16)
+
+        # Área de mapeamento
+        mapping_area = tk.Frame(parent, bg=BG_DARK)
+        mapping_area.pack(side="top", fill="both", expand=True, padx=16, pady=8)
+
+        self._build_mapping_area(mapping_area)
 
     # ─── Seção de arquivos ─────────────────────────────────────────────────────
     def _build_file_section(self, parent: tk.Frame):
@@ -336,9 +336,48 @@ class App(tk.Tk):
         tk.Label(parent, text="MAPEAMENTOS ATIVOS", bg=BG_DARK, fg=TEXT_SEC,
                  font=("Segoe UI", 8, "bold")).grid(
             row=2, column=0, columnspan=3, sticky="w", pady=(10, 4))
+        parent.rowconfigure(3, weight=1)
 
-        self.mapping_canvas = tk.Frame(parent, bg=BG_DARK)
-        self.mapping_canvas.grid(row=3, column=0, columnspan=3, sticky="ew")
+        mapped_container = tk.Frame(parent, bg=BG_DARK)
+        mapped_container.grid(row=3, column=0, columnspan=3, sticky="nsew")
+
+        self.mapped_canvas = tk.Canvas(
+            mapped_container, bg=BG_DARK, highlightthickness=0, bd=0)
+        mapped_scroll = tk.Scrollbar(
+            mapped_container, orient="vertical", command=self.mapped_canvas.yview,
+            bg=BG_CARD, troughcolor=BG_DARK, relief="flat", borderwidth=0)
+        self.mapped_canvas.configure(yscrollcommand=mapped_scroll.set)
+
+        mapped_scroll.pack(side="right", fill="y")
+        self.mapped_canvas.pack(side="left", fill="both", expand=True)
+
+        self.mapping_canvas = tk.Frame(self.mapped_canvas, bg=BG_DARK)
+        self._mapped_window = self.mapped_canvas.create_window(
+            (0, 0), window=self.mapping_canvas, anchor="nw")
+
+        def _on_inner_configure(e):
+            self.mapped_canvas.configure(
+                scrollregion=self.mapped_canvas.bbox("all"))
+
+        def _on_canvas_configure(e):
+            self.mapped_canvas.itemconfig(self._mapped_window, width=e.width)
+
+        self.mapping_canvas.bind("<Configure>", _on_inner_configure)
+        self.mapped_canvas.bind("<Configure>", _on_canvas_configure)
+
+        def _on_mousewheel(event):
+            self.mapped_canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+
+        def _bind_mousewheel(e):
+            self.mapped_canvas.bind_all("<MouseWheel>", _on_mousewheel)
+
+        def _unbind_mousewheel(e):
+            self.mapped_canvas.unbind_all("<MouseWheel>")
+
+        self.mapped_canvas.bind("<Enter>", _bind_mousewheel)
+        self.mapped_canvas.bind("<Leave>", _unbind_mousewheel)
+        self.mapping_canvas.bind("<Enter>", _bind_mousewheel)
+        self.mapping_canvas.bind("<Leave>", _unbind_mousewheel)
 
     # ─── Lógica de seleção de arquivo ─────────────────────────────────────────
     def _pick_source(self):

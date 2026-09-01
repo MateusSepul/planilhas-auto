@@ -16,5 +16,59 @@
       "source": "Data",
       "destination": "Ref"
     }
+  ],
+  "zrlparam": [
+    {
+      "source": "Material",
+      "destination": "Artigo"
+    },
+    {
+      "source": "Cen.",
+      "destination": "Centro"
+    },
+    {
+      "source": "Tipo MRP",
+      "destination": "Tipo de RP"
+    },
+    {
+      "source": "Pto.reabast.",
+      "destination": "Ponto de Ressuprimento"
+    },
+    {
+      "source": "Estq.seg.",
+      "destination": "Estoque de segurança"
+    },
+    {
+      "source": "Estoque Teórico",
+      "destination": "Estoque Teórico"
+    },
+    {
+      "source": "Cobertura teórica",
+      "destination": "Dias de Cobertura"
+    },
+    {
+      "source": "Ciclo MRP",
+      "destination": "Ciclo MRP"
+    },
+    {
+      "source": "ABC",
+      "destination": "Indicador ABC"
+    },
+    {
+      "source": "Períodos Históricos",
+      "destination": "Periodos Históricos"
+    },
+    {
+      "source": "Períodos Previsão",
+      "destination": "Periodos de Previsão"
+    },
+    {
+      "source": "Div",
+      "destination": "Grupo de Compras"
+    },
+    {
+      "source": "Div",
+      "destination": "Planejador MRP(OBRIGATÓRIO)"
+    }
   ]
 }
