@@ -10,6 +10,7 @@ Ferramenta desktop com interface gráfica para **copiar dados entre planilhas Ex
 - ⚡ **Relacionamento automático de colunas** com botão rápido (inteligência para correspondência exata, sinônimos comuns e similaridade textual)
 - 🔀 **Mapeamento de colunas manual** por clique: selecione uma coluna de origem → selecione uma coluna de destino
 - 👁 Visualização em tempo real dos mapeamentos ativos
+- 📐 **Opção de importar fórmulas/funções do Excel** (`fx`): escolha entre copiar apenas os valores calculados ou preservar as fórmulas originais (`=SOMA(...)`, `=PROCV(...)`, etc.)
 - 💾 **Salvar e reutilizar layouts** de mapeamento (perfis nomeados)
 - 🗑 Gerenciamento de layouts: salvar, carregar e deletar
 - ▶ Execução do preenchimento em **thread separada** com barra de progresso

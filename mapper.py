@@ -185,6 +185,7 @@ def execute_mapping(
     mapping: List[Dict],
     source_sheet: int = 0,
     dest_sheet: int = 0,
+    import_formulas: bool = False,
     progress_callback: Optional[Callable[[int, int], None]] = None,
 ) -> int:
     """
@@ -198,13 +199,14 @@ def execute_mapping(
         mapping: Lista de {'source': 'NomeColOrigem', 'destination': 'NomeColDestino'}
         source_sheet: Índice da aba na planilha de origem
         dest_sheet: Índice da aba na planilha de destino
+        import_formulas: Se True, preserva e importa as fórmulas/funções do Excel em vez de apenas os valores calculados
         progress_callback: Função chamada com (linha_atual, total_linhas)
 
     Returns:
         Número de linhas copiadas.
     """
-    # Lê origem
-    wb_src = openpyxl.load_workbook(source_path, data_only=True)
+    # Lê origem (se import_formulas for True, data_only=False preserva as funções/fórmulas)
+    wb_src = openpyxl.load_workbook(source_path, data_only=not import_formulas)
     ws_src = wb_src[wb_src.sheetnames[source_sheet]]
 
     # Lê destino (template)

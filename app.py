@@ -184,9 +184,25 @@ class App(tk.Tk):
 
     # ─── Painel direito ────────────────────────────────────────────────────────
     def _build_right_panel(self, parent: tk.Frame):
-        # Botão de execução fixado no rodapé
+        # Botão de execução e opções fixados no rodapé
         exec_frame = tk.Frame(parent, bg=BG_DARK)
         exec_frame.pack(side="bottom", fill="x", padx=16, pady=12)
+
+        # Flag para importar fórmulas/funções do Excel
+        self.import_formulas_var = tk.BooleanVar(value=False)
+        self.formulas_check = tk.Checkbutton(
+            exec_frame,
+            text="fx  Importar funções/fórmulas",
+            variable=self.import_formulas_var,
+            bg=BG_DARK,
+            fg=TEXT_PRI,
+            selectcolor=BG_CARD,
+            activebackground=BG_DARK,
+            activeforeground=TEXT_PRI,
+            font=("Segoe UI", 9),
+            cursor="hand2",
+        )
+        self.formulas_check.pack(side="left")
 
         ttk.Button(exec_frame, text="▶  Preencher Planilha",
                    style="Success.TButton",
@@ -652,6 +668,7 @@ class App(tk.Tk):
 
         rules = [{"source": src, "destination": dst}
                  for dst, src in self.mappings.items()]
+        import_formulas = self.import_formulas_var.get()
 
         self.progress["value"] = 0
         self.status_var.set("Executando preenchimento…")
@@ -672,6 +689,7 @@ class App(tk.Tk):
                     mapping=rules,
                     source_sheet=self.source_sheet_idx,
                     dest_sheet=self.dest_sheet_idx,
+                    import_formulas=import_formulas,
                     progress_callback=cb,
                 )
                 self.progress["value"] = 100
