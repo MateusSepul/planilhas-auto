@@ -191,6 +191,9 @@ class App(tk.Tk):
         ttk.Button(exec_frame, text="▶  Preencher Planilha",
                    style="Success.TButton",
                    command=self._execute).pack(side="right")
+        ttk.Button(exec_frame, text="⚡  Relacionar Automaticamente",
+                   style="TButton",
+                   command=self._auto_map).pack(side="right", padx=(0, 8))
         ttk.Button(exec_frame, text="↺  Limpar Mapeamento",
                    style="Ghost.TButton",
                    command=self._clear_mapping).pack(side="right", padx=(0, 8))
@@ -301,8 +304,8 @@ class App(tk.Tk):
         src_scroll.config(command=self.src_listbox.yview)
         self.src_listbox.bind("<<ListboxSelect>>", self._on_src_select)
 
-        # Seta central
-        arrow_frame = tk.Frame(parent, bg=BG_DARK, width=60)
+        # Seta central e botão rápido
+        arrow_frame = tk.Frame(parent, bg=BG_DARK, width=80)
         arrow_frame.grid(row=1, column=1, padx=8)
         arrow_frame.pack_propagate(False)
         self.arrow_label = tk.Label(arrow_frame, text="➡", bg=BG_DARK,
@@ -310,6 +313,8 @@ class App(tk.Tk):
         self.arrow_label.pack(expand=True)
         tk.Label(arrow_frame, text="clique\norig.→dest.", bg=BG_DARK,
                  fg=TEXT_SEC, font=("Segoe UI", 7)).pack()
+        ttk.Button(arrow_frame, text="⚡ Auto", style="TButton",
+                   command=self._auto_map).pack(pady=(6, 8))
 
         # Lista de colunas destino
         dst_frame = tk.Frame(parent, bg=BG_CARD, bd=0)
@@ -537,6 +542,36 @@ class App(tk.Tk):
         self._refresh_dst_list()
         self._refresh_mapping_display()
         self.status_var.set(f"Mapeamento para '{dst_col}' removido")
+
+    def _auto_map(self):
+        if not self.source_cols or not self.dest_cols:
+            messagebox.showwarning(
+                "Atenção",
+                "Selecione as planilhas de origem e destino antes de relacionar as colunas automaticamente."
+            )
+            return
+
+        matches = mapper.auto_match_columns(self.source_cols, self.dest_cols)
+        if not matches:
+            messagebox.showinfo(
+                "Auto Relacionamento",
+                "Nenhuma correspondência automática foi encontrada entre as colunas."
+            )
+            return
+
+        # Atualiza o dicionário de mapeamentos com as relações encontradas
+        self.mappings.update(matches)
+        self._pending_src = None
+        self.arrow_label.config(fg=TEXT_SEC)
+
+        self._refresh_src_list()
+        self._refresh_dst_list()
+        self._refresh_mapping_display()
+        self.src_listbox.selection_clear(0, tk.END)
+        self.dst_listbox.selection_clear(0, tk.END)
+
+        count = len(matches)
+        self.status_var.set(f"✓ {count} coluna(s) relacionada(s) automaticamente!")
 
     def _clear_mapping(self):
         if self.mappings and messagebox.askyesno(

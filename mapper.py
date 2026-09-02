@@ -2,8 +2,150 @@
 mapper.py — Lógica de leitura, mapeamento e escrita de planilhas Excel.
 """
 
-from typing import Callable, Dict, List, Optional, Tuple
+import difflib
+import re
+import unicodedata
+from typing import Callable, Dict, List, Optional, Set, Tuple
 import openpyxl
+
+
+SYNONYM_GROUPS = [
+    {"nome", "cliente", "razao", "razaosocial", "titular", "nomecliente", "nomecompleto", "usuario", "comprador", "socio", "fornecedor"},
+    {"email", "correioeletronico", "contato", "mail", "emailcontato"},
+    {"telefone", "tel", "celular", "cel", "fone", "whatsapp", "contatotel", "telefonecontato"},
+    {"valor", "total", "preco", "valortotal", "quantia", "montante", "saldo", "vlr", "vlrtotal", "precototal", "custo", "subtotal"},
+    {"data", "dt", "dataemissao", "datavencimento", "ref", "referencia", "periodo", "datacadastro", "dia"},
+    {"cpf", "cnpj", "documento", "doc", "cpfcnpj", "nrodocumento", "numdocumento"},
+    {"endereco", "logradouro", "rua", "localizacao", "enderecocompleto", "bairro"},
+    {"cidade", "municipio"},
+    {"estado", "uf"},
+    {"cep", "codigopostal", "zip", "zipcode"},
+    {"codigo", "cod", "id", "identificador", "sku", "chave", "numero", "num", "nro"},
+    {"descricao", "desc", "historico", "produto", "item", "detalhe", "detalhes", "observacao", "obs", "especificacao"},
+    {"quantidade", "qtd", "quant", "volume", "unidades", "itens", "estoque", "quantitativo"},
+    {"status", "situacao", "estadoatual", "fase"},
+]
+
+
+def _normalize_text(text: str) -> str:
+    """Remove acentos, converte para minúsculas e remove espaços nas pontas."""
+    if not text:
+        return ""
+    text = str(text).strip().lower()
+    text = unicodedata.normalize("NFKD", text).encode("ascii", "ignore").decode("utf-8")
+    return text
+
+
+def _tokenize(text: str) -> Set[str]:
+    """Divide a string em tokens alfanuméricos."""
+    norm = _normalize_text(text)
+    return set(re.findall(r"[a-z0-9]+", norm))
+
+
+def _clean_str(text: str) -> str:
+    """Remove todos os caracteres não alfanuméricos."""
+    norm = _normalize_text(text)
+    return re.sub(r"[^a-z0-9]", "", norm)
+
+
+def _get_synonym_group(token: str) -> Optional[int]:
+    """Retorna o índice do grupo de sinônimos se o token pertencer a algum."""
+    for idx, grp in enumerate(SYNONYM_GROUPS):
+        if token in grp:
+            return idx
+    return None
+
+
+def _score_match(src: str, dst: str) -> float:
+    """Calcula a pontuação de similaridade/compatibilidade entre duas colunas (0.0 a 1.0)."""
+    s_clean = _clean_str(src)
+    d_clean = _clean_str(dst)
+    if not s_clean or not d_clean:
+        return 0.0
+
+    # Correspondência exata normalizada
+    if s_clean == d_clean:
+        return 1.0
+
+    s_tokens = _tokenize(src)
+    d_tokens = _tokenize(dst)
+
+    # Interseção de tokens exatos
+    common_tokens = s_tokens.intersection(d_tokens)
+    if common_tokens:
+        overlap = len(common_tokens) / max(len(s_tokens), len(d_tokens))
+        return 0.85 + (overlap * 0.1)
+
+    # Grupo de sinônimos no texto limpo completo
+    s_syn_group = _get_synonym_group(s_clean)
+    d_syn_group = _get_synonym_group(d_clean)
+    if s_syn_group is not None and s_syn_group == d_syn_group:
+        return 0.90
+
+    # Grupo de sinônimos por tokens
+    for st in s_tokens:
+        st_grp = _get_synonym_group(st)
+        if st_grp is None:
+            continue
+        for dt in d_tokens:
+            dt_grp = _get_synonym_group(dt)
+            if dt_grp is not None and st_grp == dt_grp:
+                return 0.82
+
+    # Inclusão de substring para termos significativos (>= 3 caracteres)
+    if len(s_clean) >= 3 and len(d_clean) >= 3:
+        if d_clean in s_clean or s_clean in d_clean:
+            ratio = len(min(d_clean, s_clean, key=len)) / len(max(d_clean, s_clean, key=len))
+            return 0.75 + (ratio * 0.15)
+
+    # Similaridade difflib
+    return difflib.SequenceMatcher(None, s_clean, d_clean).ratio()
+
+
+def auto_match_columns(
+    source_cols: List[str],
+    dest_cols: List[str],
+    similarity_threshold: float = 0.65
+) -> Dict[str, str]:
+    """
+    Relaciona automaticamente colunas de origem e destino calculando
+    compatibilidade por igualdade, sinônimos, palavras-chave e similaridade.
+
+    Args:
+        source_cols: Lista de colunas da planilha de origem
+        dest_cols: Lista de colunas da planilha de destino
+        similarity_threshold: Limiar mínimo para aceitar um relacionamento
+
+    Returns:
+        Dict mapeando {coluna_destino: coluna_origem}
+    """
+    candidates = []
+    for d in dest_cols:
+        if not d or not str(d).strip():
+            continue
+        for s in source_cols:
+            if not s or not str(s).strip():
+                continue
+            sc = _score_match(s, d)
+            if sc >= similarity_threshold:
+                candidates.append((sc, d, s))
+
+    # Ordena por pontuação decrescente para priorizar as melhores correspondências
+    candidates.sort(key=lambda x: x[0], reverse=True)
+
+    matches: Dict[str, str] = {}
+    matched_dest: Set[str] = set()
+    used_sources: Set[str] = set()
+
+    for sc, d, s in candidates:
+        if d in matched_dest or s in used_sources:
+            continue
+        matches[d] = s
+        matched_dest.add(d)
+        used_sources.add(s)
+
+    return matches
+
 
 
 def get_columns(filepath: str, sheet_index: int = 0) -> Tuple[List[str], str]:

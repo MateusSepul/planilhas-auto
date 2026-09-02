@@ -1,4 +1,4 @@
-﻿# 🗂 Mapeador de Planilhas
+# 🗂 Mapeador de Planilhas
 
 Ferramenta desktop com interface gráfica para **copiar dados entre planilhas Excel**, mapeando colunas de origem para colunas de destino de forma visual e intuitiva. Suporta salvar e reutilizar perfis de mapeamento (layouts).
 
@@ -7,7 +7,8 @@ Ferramenta desktop com interface gráfica para **copiar dados entre planilhas Ex
 ## ✨ Funcionalidades
 
 - 📂 Seleção visual de planilhas de **origem** e **destino** (`.xlsx` / `.xls`)
-- 🔀 **Mapeamento de colunas** por clique: selecione uma coluna de origem → selecione uma coluna de destino
+- ⚡ **Relacionamento automático de colunas** com botão rápido (inteligência para correspondência exata, sinônimos comuns e similaridade textual)
+- 🔀 **Mapeamento de colunas manual** por clique: selecione uma coluna de origem → selecione uma coluna de destino
 - 👁 Visualização em tempo real dos mapeamentos ativos
 - 💾 **Salvar e reutilizar layouts** de mapeamento (perfis nomeados)
 - 🗑 Gerenciamento de layouts: salvar, carregar e deletar
