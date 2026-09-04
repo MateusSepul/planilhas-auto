@@ -134,7 +134,7 @@ Para não travar a interface durante o processamento, a cópia roda em uma **thr
 
 ### Instalar dependências
 
-```bash
+```~bash
 pip install -r requirements.txt
 ```
 
